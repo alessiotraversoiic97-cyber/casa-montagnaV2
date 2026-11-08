@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- FullCalendar CSS & JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <!-- Flatpickr CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/it.js"></script>
+  <!-- Google Fonts Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #fdf4ff 50%, #f0fdf4 100%);
+      --orb-1: #93c5fd;
+      --orb-2: #fbcfe8;
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.8);
+      --glass-card-hover: rgba(31, 38, 135, 0.12);
+      --input-bg: rgba(255, 255, 255, 0.9);
+      --input-bg-focus: rgba(255, 255, 255, 1);
+      --gigi-bg: rgba(147, 197, 253, 0.85);
+      --gigi-text: #1d4ed8;
+      --alessandro-bg: rgba(134, 239, 172, 0.85);
+      --alessandro-text: #15803d;
+      --modal-bg: rgba(255, 255, 255, 0.85);
+      --modal-body-bg: rgba(248, 250, 252, 0.7);
+      --border-subtle: rgba(226, 232, 240, 0.8);
+      --today-bg: rgba(251, 191, 36, 0.22);
+      --today-border: #f59e0b;
+      --today-text: #b45309;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #60a5fa;
+        --primary-hover: #3b82f6;
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --bg-gradient: linear-gradient(135deg, #090d16 0%, #170b1e 50%, #061a12 100%);
+        --orb-1: #1e3a8a;
+        --orb-2: #581c87;
+        --glass-bg: rgba(30, 41, 59, 0.55);
+        --glass-border: rgba(255, 255, 255, 0.12);
+        --glass-card-hover: rgba(0, 0, 0, 0.3);
+        --input-bg: rgba(15, 23, 42, 0.8);
+        --input-bg-focus: rgba(30, 41, 59, 1);
+        --gigi-bg: rgba(37, 99, 235, 0.55);
+        --gigi-text: #bfdbfe;
+        --alessandro-bg: rgba(22, 163, 74, 0.55);
+        --alessandro-text: #bbf7d0;
+        --modal-bg: rgba(30, 41, 59, 0.85);
+        --modal-body-bg: rgba(15, 23, 42, 0.6);
+        --border-subtle: rgba(51, 65, 85, 0.8);
+        --today-bg: rgba(245, 158, 11, 0.25);
+        --today-border: #fbbf24;
+        --today-text: #fde68a;
+      }
+    }
+
+    html, body { margin: 0; padding: 0; width: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      color: var(--text-main);
+      -webkit-tap-highlight-color: transparent;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      position: relative;
+      overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .bg-orbs-container {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; z-index: -1; pointer-events: none;
+    }
+
+    .bg-orbs-container::before, .bg-orbs-container::after {
+      content: ''; position: absolute; width: 350px; height: 350px; border-radius: 50%; filter: blur(90px); opacity: 0.5; animation: floatOrbs 10s infinite alternate ease-in-out;
+    }
+    .bg-orbs-container::before { background: var(--orb-1); top: -50px; left: -50px; }
+    .bg-orbs-container::after { background: var(--orb-2); bottom: -50px; right: -50px; animation-delay: -5s; }
+
+    @keyframes floatOrbs {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(30px) scale(1.1); }
+    }
+
+    .container { max-width: 100%; margin: 0 auto; padding: 16px; box-sizing: border-box; position: relative; z-index: 1; }
+
+    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 0 4px; }
+    .header-buttons { display: flex; gap: 8px; }
+
+    h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px; }
+
+    .card {
+      background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border); padding: 18px; border-radius: 20px;
+      box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.15); margin-bottom: 16px;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+    }
+    .card:hover { box-shadow: 0 15px 35px 0 var(--glass-card-hover); }
+
+    @media (min-width: 900px) { 
+      body { padding: 32px; }
+      .container { max-width: 1100px; padding: 0; }
+      h2 { font-size: 1.6rem; }
+    }
+    
+    .turn-info {
+      padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; font-weight: 600; text-align: center; font-size: 0.85rem;
+      backdrop-filter: blur(8px); border: 1px solid var(--glass-border); transition: all 0.3s ease;
+    }
+    .turn-gigi { background: var(--gigi-bg); color: var(--gigi-text); border-color: var(--gigi-text); }
+    .turn-alessandro { background: var(--alessandro-bg); color: var(--alessandro-text); border-color: var(--alessandro-text); }
+    .turn-summer { background: var(--glass-bg); color: var(--text-muted); }
+
+    .form-group { margin-bottom: 12px; }
+    label { font-weight: 600; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    select, input, textarea {
+      width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--glass-border); box-sizing: border-box;
+      font-family: 'Inter', sans-serif; font-size: 0.92rem; background: var(--input-bg); color: var(--text-main); transition: all 0.3s ease;
+    }
+    
+    input[type="date"] {
+      background-color: var(--input-bg) !important; color: var(--text-main) !important; -webkit-appearance: none; min-height: 42px; border: 1px solid var(--glass-border) !important;
+    }
+
+    select option { background-color: var(--modal-bg); color: var(--text-main); }
+    select:focus, input:focus, textarea:focus {
+      outline: none; border-color: var(--primary); background: var(--input-bg-focus); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    }
+    textarea { resize: vertical; height: 50px; }
+
+    button[type="submit"], .btn-action, button[onclick="calculateStats()"] {
+      background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%); color: white; border: none; font-weight: 600;
+      padding: 12px; border-radius: 12px; cursor: pointer; width: 100%; font-size: 0.95rem;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-action { padding: 8px 14px; border-radius: 20px; font-size: 0.8rem; width: auto; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-stats { background: linear-gradient(135deg, #059669 0%, #047857 100%); box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3); display: none; }
+    .btn-storico { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); }
+    .btn-download { background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.03); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.35); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.6); }
+
+    @media (prefers-color-scheme: dark) {
+      ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.92); }
+      ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.28); }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+    }
+
+    #calendar { 
+      background: var(--glass-bg) !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border) !important; padding: 8px; border-radius: 20px;
+      box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.15); touch-action: pan-y;
+    }
+
+    .fc { font-family: 'Inter', sans-serif; width: 100% !important; color: var(--text-main); }
+    .fc .fc-scroller { height: auto !important; overflow: visible !important; }
+    .fc .fc-daygrid-body, .fc-scrollgrid { width: 100% !important; }
+    
+    .fc-toolbar.fc-header-toolbar { 
+      padding: 12px !important; margin: 0 !important; background: transparent !important;
+      border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;
+    }
+    .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 700 !important; color: var(--text-main); text-transform: capitalize; }
+    
+    .fc-button { 
+      background: var(--input-bg) !important; color: var(--text-main) !important; border: 1px solid var(--glass-border) !important;
+      font-weight: 600 !important; border-radius: 20px !important; padding: 6px 14px !important; font-size: 0.78rem !important;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+    }
+
+    .fc-col-header-cell { background: var(--input-bg); padding: 8px 0 !important; border-bottom: 1px solid var(--border-subtle); }
+    .fc-col-header-cell-cushion { font-weight: 700 !important; font-size: 0.72rem !important; color: var(--text-muted) !important; text-transform: uppercase; }
+
+    .fc-daygrid-day { transition: background-color 0.2s ease; }
+    .fc-daygrid-day:hover { background-color: var(--glass-card-hover); }
+    
+    .fc-daygrid-day-frame { min-height: 105px !important; }
+    @media (min-width: 900px) { .fc-daygrid-day-frame { min-height: 125px !important; } }
+
+    .fc-event, .fc-event *, .fc-daygrid-event { cursor: pointer !important; }
+
+    .fc-day-today { background-color: var(--today-bg) !important; }
+    .fc-daygrid-day-number { font-weight: 600; font-size: 0.78rem; color: var(--text-main); padding: 6px 8px !important; }
+
+    .fc-day-today .fc-daygrid-day-number {
+      background: var(--today-border); color: #0f172a !important; border-radius: 50%;
+      width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin: 4px; font-weight: 700;
+    }
+
+    .turn-gigi-bg { background: var(--gigi-bg) !important; border: none !important; pointer-events: none !important; }
+    .turn-gigi-bg .fc-event-title { font-size: 0.7rem !important; font-weight: 700 !important; color: var(--gigi-text) !important; }
+
+    .turn-alessandro-bg { background: var(--alessandro-bg) !important; border: none !important; pointer-events: none !important; }
+    .turn-alessandro-bg .fc-event-title { font-size: 0.7rem !important; font-weight: 700 !important; color: var(--alessandro-text) !important; }
+
+    .legend { display: flex; gap: 16px; font-size: 0.78rem; margin: 14px 0 10px 0; justify-content: center; flex-wrap: wrap; color: var(--text-muted); font-weight: 500; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-box { width: 12px; height: 12px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+    .modal-overlay { 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); 
+      display: none; justify-content: center; align-items: center; z-index: 1000; padding: 10px; box-sizing: border-box;
+    }
+    #deleteStoricoModal { z-index: 2000 !important; }
+
+    .modal-card { 
+      background: var(--modal-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 20px;
+      border-radius: 24px; width: 95%; max-width: 380px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); text-align: left; 
+    }
+    .modal-card.wide {
+      max-width: 980px; width: 100%; height: auto; max-height: 85vh; max-height: calc(85vh - env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-card h3 { margin-top: 0; color: var(--text-main); font-size: 1.15rem; font-weight: 700; }
+    .modal-body { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; background: var(--modal-body-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--border-subtle); white-space: pre-wrap; }
+    .modal-buttons { display: flex; gap: 10px; margin-top: auto; padding-top: 10px; }
+    .btn-cancel { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--glass-border); padding: 11px; border-radius: 12px; cursor: pointer; flex: 1; font-weight: 600; }
+    .btn-delete { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 11px; border-radius: 12px; cursor: pointer; border: none; flex: 1; font-weight: 600; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+
+    .table-container { flex: 1; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border-subtle); background: var(--modal-body-bg); padding: 8px; }
+
+    .storico-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; text-align: left; }
+    .storico-table th {
+      position: sticky; top: 0; background: var(--modal-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      padding: 12px 10px; border-bottom: 2px solid var(--border-subtle); color: var(--text-main); font-weight: 700; z-index: 5; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .storico-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-subtle); color: var(--text-main); }
+    .storico-table tr:hover { background: var(--glass-card-hover); }
+    .header-row { font-weight: bold; background: rgba(37, 99, 235, 0.15) !important; }
+
+    .col-dare, .col-avere, .col-saldo { white-space: nowrap !important; }
+    .col-dare { color: #059669 !important; font-weight: 600 !important; }
+    .col-avere { color: #dc2626 !important; font-weight: 600 !important; }
+
+    #formCollapsibleContainer {
+      background: var(--modal-body-bg); padding: 0 12px; border-radius: 12px; border: 1px solid transparent; margin-bottom: 12px; display: none; flex-shrink: 0;
+    }
+    #formCollapsibleContainer.open { display: block; padding: 12px; border-color: var(--border-subtle); }
+
+    .spesa-form-grid { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 2fr auto auto; gap: 8px; align-items: center; }
+
+    .filter-group { display: flex; gap: 10px; align-items: center; }
+    .filter-input-wrapper { display: flex; flex-direction: column; width: 170px; }
+
+    @media (max-width: 768px) {
+      .turn-gigi-bg, .turn-alessandro-bg {
+        height: 100% !important; position: relative !important; top: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; padding-top: 14px !important; box-sizing: border-box !important;
+      }
+      .turn-gigi-bg .fc-event-title, .turn-alessandro-bg .fc-event-title {
+        font-size: 0.65rem !important; text-align: center !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+      }
+
+      .modal-overlay { align-items: flex-start !important; padding-top: 15px !important; }
+      .modal-card.wide { padding: 10px; width: 100%; height: auto; max-height: 88vh; max-height: calc(88vh - env(safe-area-inset-bottom)); }
+      
+      .spesa-form-grid { display: flex; flex-direction: column; gap: 8px; }
+      .spesa-form-grid input { width: 100% !important; }
+      
+      .storico-header-bar { flex-direction: column; align-items: stretch !important; gap: 8px !important; flex-shrink: 0; }
+      .storico-header-bar > div { width: 100%; justify-content: space-between; }
+      .filter-group { display: flex; gap: 6px; width: 100%; }
+      .filter-input-wrapper { width: 100%; flex: 1; }
+      .filter-group input { font-size: 0.78rem; padding: 8px; background: var(--input-bg) !important; color: var(--text-main) !important; border: 1px solid var(--primary) !important; }
+
+      .storico-table { display: none; }
+      
+      .mobile-card-list { display: flex; flex-direction: column; gap: 10px; }
+      .mobile-spesa-card { background: var(--modal-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+      .mobile-spesa-card.header-row-card { background: rgba(37, 99, 235, 0.15); }
+      .m-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.85rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px; margin-bottom: 6px; }
+      .m-card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.8rem; margin-bottom: 8px; }
+      .m-card-row-full { grid-column: span 2; color: var(--text-muted); }
+      .m-card-footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: 6px; }
+    }
+
+    @media (min-width: 769px) { .mobile-card-list { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="bg-orbs-container"></div>
+
+  <div class="container">
+    <div class="header-bar">
+      <h2>🏔️ Gestione Casa Montagna</h2>
+      <div class="header-buttons">
+        <button id="statsBtn" class="btn-action btn-stats" onclick="openStatsModal()">📊 Statistiche</button>
+        <button id="storicoBtn" class="btn-action btn-storico" onclick="openStoricoModal()">📁 Storico Spese</button>
+      </div>
+    </div>
+
+    <!-- Modulo Prenotazione -->
+    <div class="card">
+      <h3>➕ Nuova Prenotazione</h3>
+      <div id="turnBanner" class="turn-info turn-summer">Seleziona un periodo per verificare il turno</div>
+      
+      <form id="bookingForm" onsubmit="handleFormSubmit(event)">
+        <div class="form-group">
+          <label>Chi effettua la prenotazione?</label>
+          <select id="userSelect" required onchange="updateCategory()">
+            <option value="" disabled selected>Seleziona Persona o Categoria</option>
+            <optgroup label="Famiglia Gigi">
+              <option value="Gigi" data-category="Gigi">Gigi</option>
+              <option value="Francesca" data-category="Gigi">Francesca</option>
+              <option value="Alessio" data-category="Gigi">Alessio</option>
+              <option value="Luca" data-category="Gigi">Luca</option>
+            </optgroup>
+            <optgroup label="Famiglia Alessandro">
+              <option value="Alessandro" data-category="Alessandro">Alessandro</option>
+              <option value="Elena" data-category="Alessandro">Elena</option>
+              <option value="Elisa" data-category="Alessandro">Elisa</option>
+              <option value="Chiara" data-category="Alessandro">Chiara</option>
+            </optgroup>
+            <optgroup label="Altre Categorie">
+              <option value="Entrambe le Famiglie" data-category="Entrambe">Entrambe le Famiglie</option>
+              <option value="Ospiti / Affitto" data-category="Ospiti">Ospiti / Affitto</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Periodo di soggiorno (Dal ➔ Al)</label>
+          <input type="text" id="dateRange" placeholder="Tocca qui per scegliere le date..." required style="cursor: pointer;">
+        </div>
+
+        <div class="form-group">
+          <label>Descrizione / Note (opzionale)</label>
+          <textarea id="bookingNote" placeholder="Note o dettagli..."></textarea>
+        </div>
+
+        <button type="submit" id="submitBtn">Conferma Prenotazione</button>
+      </form>
+    </div>
+
+    <!-- Legenda Calendario -->
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: var(--gigi-bg);"></div> Turno Gigi</div>
+      <div class="legend-item"><div class="legend-box" style="background: var(--alessandro-bg);"></div> Turno Alessandro</div>
+      <div class="legend-item"><div class="legend-box" style="background: var(--primary);"></div> Prenotato</div>
+    </div>
+
+    <div id="calendar"></div>
+  </div>
+
+  <!-- Popup Modale Dettagli ed Eliminazione Evento -->
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 id="modalEventTitle">📋 Dettagli Prenotazione</h3>
+      <div id="modalEventBody" class="modal-body">Caricamento dettagli...</div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Chiudi</button>
+        <button type="button" class="btn-delete" onclick="confirmDeleteEvent()">Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Modale Conferma Eliminazione Storico -->
+  <div id="deleteStoricoModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>⚠️ Conferma Eliminazione</h3>
+      <div class="modal-body">Sei sicuro di voler eliminare questa riga dallo storico del Google Foglio?</div>
+      <input type="hidden" id="storicoRowToDelete" value="">
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeDeleteStoricoModal()">Annulla</button>
+        <button type="button" class="btn-delete" onclick="executeDeleteStoricoRow()">Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Modale Statistiche -->
+  <div id="statsModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>📊 Statistiche Occupazione</h3>
+      <div class="form-group">
+        <label>Periodo da analizzare:</label>
+        <div style="display: flex; gap: 6px;">
+          <input type="date" id="statStart" style="font-size: 0.85rem;">
+          <input type="date" id="statEnd" style="font-size: 0.85rem;">
+        </div>
+      </div>
+      <button onclick="calculateStats()" style="margin-bottom: 12px; font-size: 0.88rem; padding: 10px;">Genera Report</button>
+
+      <div id="statsResults" style="display:none;">
+        <div class="stat-box" style="display: flex; gap: 8px; margin-bottom: 10px;">
+          <div class="stat-card" style="flex: 1; background: var(--modal-body-bg); border: 1px solid var(--border-subtle); padding: 10px 4px; border-radius: 12px; text-align: center;">
+            <div class="number" id="statTotal" style="font-size: 1.1rem; font-weight: 700;">0</div>
+            <div class="label" style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;">Totali</div>
+          </div>
+          <div class="stat-card" style="flex: 1; background: var(--modal-body-bg); border: 1px solid var(--border-subtle); padding: 10px 4px; border-radius: 12px; text-align: center;">
+            <div class="number" id="statOccupied" style="font-size: 1.1rem; font-weight: 700; color:#059669;">0</div>
+            <div class="label" style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;">Occupati</div>
+          </div>
+          <div class="stat-card" style="flex: 1; background: var(--modal-body-bg); border: 1px solid var(--border-subtle); padding: 10px 4px; border-radius: 12px; text-align: center;">
+            <div class="number" id="statEmpty" style="font-size: 1.1rem; font-weight: 700; color:#dc2626;">0</div>
+            <div class="label" style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;">Vuoti</div>
+          </div>
+        </div>
+        <div id="statsDetail" style="font-size: 0.78rem; background: var(--modal-body-bg); padding: 10px; border-radius: 12px; border: 1px solid var(--border-subtle); line-height: 1.4; max-height: 140px; overflow-y: auto;"></div>
+      </div>
+
+      <div class="modal-buttons" style="margin-top: 16px;">
+        <button type="button" class="btn-cancel" onclick="closeStatsModal()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Modale Storico Spese -->
+  <div id="storicoModal" class="modal-overlay">
+    <div class="modal-card wide">
+      <div class="storico-header-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <h3 style="margin: 0; font-size: 1.05rem;">📁 Storico Spese</h3>
+          <button type="button" class="btn-action btn-download" onclick="downloadExcel()" style="padding: 6px 10px; font-size: 0.75rem;">📥 Excel</button>
+          <button type="button" class="btn-action" onclick="toggleFormMovimento()" id="toggleFormBtn" style="padding: 6px 12px; font-size: 0.75rem; background: var(--primary);">➕ Nuovo Movimento</button>
+        </div>
+        <div class="filter-group">
+          <div class="filter-input-wrapper">
+            <label style="font-size: 0.62rem; margin-bottom: 2px;">Filtro Dal:</label>
+            <input type="date" id="filterStart" placeholder="Da" onchange="applyFilters()">
+          </div>
+          <div class="filter-input-wrapper">
+            <label style="font-size: 0.62rem; margin-bottom: 2px;">Filtro Al:</label>
+            <input type="date" id="filterEnd" placeholder="A" onchange="applyFilters()">
+          </div>
+          <button type="button" class="btn-action" onclick="resetFilters()" style="padding: 8px 10px; font-size: 0.75rem; background: var(--text-muted); margin-top: 12px;">Reset</button>
+        </div>
+      </div>
+      
+      <div id="formCollapsibleContainer">
+        <strong id="formTitle" style="font-size: 0.8rem; display: block; margin-bottom: 6px;">➕ Aggiungi Nuovo Movimento</strong>
+        <input type="hidden" id="editRowIndex" value="">
+        <div class="spesa-form-grid">
+          <input type="date" id="newDate" style="font-size: 0.8rem; padding: 8px;" required>
+          <input type="text" id="newDesc" placeholder="Descrizione" style="font-size: 0.8rem; padding: 8px;" required>
+          <input type="number" step="0.01" id="newDare" placeholder="Dare (€)" style="font-size: 0.8rem; padding: 8px;">
+          <input type="number" step="0.01" id="newAvere" placeholder="Avere (€)" style="font-size: 0.8rem; padding: 8px;">
+          <input type="text" id="newNote" placeholder="Note" style="font-size: 0.8rem; padding: 8px;">
+          <button type="button" id="btnAddSpesa" class="btn-action" onclick="saveSpesaRecord()" style="padding: 9px 14px; font-size: 0.8rem; height: 100%;">Salva</button>
+          <button type="button" id="btnCancelEdit" class="btn-action" onclick="closeFormAndReset()" style="padding: 9px 10px; font-size: 0.8rem; height: 100%; background: #64748b; display: none;">Annulla</button>
+        </div>
+      </div>
+
+      <div id="storicoLoader" style="text-align: center; padding: 20px; font-weight: 500; color: var(--text-muted);">
+        Caricamento dati dallo storico Excel...
+      </div>
+
+      <div class="table-container" id="storicoTableContainer" style="display: none;">
+        <table class="storico-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrizione</th>
+              <th>Dare (€)</th>
+              <th>Avere (€)</th>
+              <th>Saldo (€)</th>
+              <th>Note</th>
+              <th style="text-align: center;">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="storicoTableBody"></tbody>
+        </table>
+        <div class="mobile-card-list" id="storicoCardList"></div>
+      </div>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeStoricoModal()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 🌐 INCOLLA QUI L'URL /exec DEL TUO GOOGLE APPS SCRIPT
+    const API_URL = "https://script.google.com/macros/s/AKfycbxZK26v6Exne1tAU7jqiEoUaROznNcFDWoi233Ib1-3bKhD8s5VqMVGiB_i7IuMqGnp/exec";
+
+    // Helper unificato per le chiamate API asincrone
+    async function apiCall(action, method = 'GET', payload = null) {
+      let url = `${API_URL}?action=${action}`;
+      let options = { method: method };
+
+      if (method === 'GET' && payload) {
+        Object.keys(payload).forEach(key => url += `&${key}=${encodeURIComponent(payload[key])}`);
+      } else if (method === 'POST') {
+        options.body = JSON.stringify({ action: action, ...payload });
+      }
+
+      const response = await fetch(url, options);
+      const result = await response.json();
+      if (result.status === 'error') throw new Error(result.message);
+      return result;
+    }
+
+    let calendar;
+    let currentCategory = '';
+    let eventToDeleteId = null;
+    let selectedStartDate = '';
+    let selectedEndDate = '';
+    let allStoricoRows = [];
+    const loadedRanges = [];
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      const now = new Date();
+      document.getElementById('statStart').value = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+      document.getElementById('statEnd').value = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+
+      try {
+        const adminRes = await apiCall('checkAdmin');
+        if (adminRes.isAdmin) {
+          document.getElementById('statsBtn').style.display = 'inline-flex';
+        }
+      } catch (e) {
+        console.error("Errore controllo admin:", e);
+      }
+
+      flatpickr("#dateRange", {
+        mode: "range",
+        locale: "it",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "j F Y",
+        minDate: "today",
+        onChange: function(selectedDates, dateStr, instance) {
+          if (selectedDates.length === 2) {
+            selectedStartDate = instance.formatDate(selectedDates[0], "Y-m-d");
+            selectedEndDate = instance.formatDate(selectedDates[1], "Y-m-d");
+            checkTurn();
+          } else {
+            selectedStartDate = '';
+            selectedEndDate = '';
+          }
+        }
+      });
+
+      const calendarEl = document.getElementById('calendar');
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'it',
+        firstDay: 1,
+        contentHeight: 'auto',
+        aspectRatio: 1.35,
+        handleWindowResize: true,
+        headerToolbar: {
+          left: 'prev,next',
+          center: 'title',
+          right: 'today'
+        },
+        buttonText: { today: 'Oggi' },
+        events: async function(info, successCallback, failureCallback) {
+          const reqStart = new Date(info.startStr);
+          const reqEnd = new Date(info.endStr);
+
+          const cached = loadedRanges.find(r => reqStart >= r.start && reqEnd <= r.end);
+          if (cached) {
+            successCallback(cached.events);
+            return;
+          }
+
+          const fetchStart = new Date(reqStart);
+          fetchStart.setMonth(fetchStart.getMonth() - 1);
+          const fetchEnd = new Date(reqStart);
+          fetchEnd.setMonth(fetchEnd.getMonth() + 6);
+
+          try {
+            const events = await apiCall('getEvents', 'GET', {
+              start: fetchStart.toISOString().split('T')[0],
+              end: fetchEnd.toISOString().split('T')[0]
+            });
+            loadedRanges.push({ start: fetchStart, end: fetchEnd, events: events });
+            successCallback(events);
+          } catch (err) {
+            console.error("Errore caricamento eventi:", err);
+            failureCallback(err);
+          }
+        },
+        eventClick: function(info) {
+          if (info.event.extendedProps.isBooking) {
+            eventToDeleteId = info.event.id;
+            const title = info.event.title;
+            const startStr = info.event.start ? info.event.start.toLocaleDateString('it-IT') : '';
+            const endObj = info.event.end ? new Date(info.event.end.getTime() - 86400000) : null;
+            const endStr = endObj ? endObj.toLocaleDateString('it-IT') : startStr;
+            const description = info.event.extendedProps.description || 'Nessuna nota';
+
+            let detailsText = `📅 Dal: ${startStr} al ${endStr}\n\n📝 Dettagli:\n${description}`;
+            document.getElementById('modalEventTitle').innerText = `📋 ${title}`;
+            document.getElementById('modalEventBody').innerText = detailsText;
+            document.getElementById('deleteModal').style.display = 'flex';
+          }
+        }
+      });
+      calendar.render();
+
+      let touchStartX = 0;
+      let touchEndX = 0;
+      calendarEl.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+      calendarEl.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        if (touchEndX < touchStartX - 50) calendar.next();
+        if (touchEndX > touchStartX + 50) calendar.prev();
+      }, {passive: true});
+    });
+
+    async function openStoricoModal() {
+      document.getElementById('storicoModal').style.display = 'flex';
+      await loadStoricoData();
+    }
+
+    function toggleFormMovimento() {
+      const container = document.getElementById('formCollapsibleContainer');
+      const btn = document.getElementById('toggleFormBtn');
+      if (container.classList.contains('open')) {
+        container.classList.remove('open');
+        btn.innerText = '➕ Nuovo Movimento';
+        btn.style.background = 'var(--primary)';
+        resetFormFields();
+      } else {
+        resetFormFields();
+        container.classList.add('open');
+        btn.innerText = '❌ Chiudi Modulo';
+        btn.style.background = '#dc2626';
+      }
+    }
+
+    async function loadStoricoData() {
+      document.getElementById('storicoLoader').style.display = 'block';
+      document.getElementById('storicoTableContainer').style.display = 'none';
+
+      try {
+        const rows = await apiCall('getStorico');
+        document.getElementById('storicoLoader').style.display = 'none';
+        document.getElementById('storicoTableContainer').style.display = 'block';
+        allStoricoRows = rows;
+        renderTable(rows);
+        scrollToBottomTable();
+      } catch (err) {
+        document.getElementById('storicoLoader').innerText = "Errore: " + err.message;
+      }
+    }
+
+    function scrollToBottomTable() {
+      setTimeout(() => {
+        const container = document.getElementById('storicoTableContainer');
+        if (container) container.scrollTop = container.scrollHeight;
+      }, 50);
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('storicoTableBody');
+      const cardList = document.getElementById('storicoCardList');
+      tbody.innerHTML = '';
+      cardList.innerHTML = '';
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 15px; color: var(--text-muted);">Nessun movimento trovato.</td></tr>`;
+        cardList.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">Nessun movimento trovato.</div>`;
+        return;
+      }
+
+      rows.forEach(r => {
+        const isHeader = r.descrizione.startsWith('ANNO') || r.descrizione.startsWith('CASA MONTAGNA');
+
+        const tr = document.createElement('tr');
+        if (isHeader) tr.className = 'header-row';
+        tr.innerHTML = `
+          <td>${r.data}</td>
+          <td>${r.descrizione}</td>
+          <td class="col-dare">${r.dare ? '€ ' + r.dare : ''}</td>
+          <td class="col-avere">${r.avere ? '€ ' + r.avere : ''}</td>
+          <td class="col-saldo">${r.saldo ? '€ ' + r.saldo : ''}</td>
+          <td>${r.note} ${r.noteExtra ? ' (' + r.noteExtra + ')' : ''}</td>
+          <td style="text-align: center; white-space: nowrap;">
+            <button onclick="editStoricoRow(${r.rowIndex}, '${r.data}', '${r.descrizione.replace(/'/g, "\\'")}', '${r.dare}', '${r.avere}', '${r.note.replace(/'/g, "\\'")}')" style="background: #3b82f6; color: white; border: none; padding: 4px 6px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; margin-right: 4px;" title="Modifica riga">✏️</button>
+            <button onclick="promptDeleteStoricoRow(${r.rowIndex})" style="background: #ef4444; color: white; border: none; padding: 4px 6px; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Elimina riga">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'mobile-spesa-card' + (isHeader ? ' header-row-card' : '');
+        cardDiv.innerHTML = `
+          <div class="m-card-header">
+            <span>📅 ${r.data || 'N/D'}</span>
+            <span style="font-size: 0.8rem; color: var(--primary);">Saldo: <strong class="col-saldo">€ ${r.saldo || '0.00'}</strong></span>
+          </div>
+          <div class="m-card-body">
+            <div class="m-card-row-full" style="font-weight: 600; color: var(--text-main);">📝 ${r.descrizione}</div>
+            <div>Dare: <span class="col-dare">${r.dare ? '€ ' + r.dare : '-'}</span></div>
+            <div>Avere: <span class="col-avere">${r.avere ? '€ ' + r.avere : '-'}</span></div>
+            ${r.note ? `<div class="m-card-row-full" style="font-style: italic;">Note: ${r.note}</div>` : ''}
+          </div>
+          <div class="m-card-footer">
+            <button onclick="editStoricoRow(${r.rowIndex}, '${r.data}', '${r.descrizione.replace(/'/g, "\\'")}', '${r.dare}', '${r.avere}', '${r.note.replace(/'/g, "\\'")}')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">✏️ Modifica</button>
+            <button onclick="promptDeleteStoricoRow(${r.rowIndex})" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">🗑️ Elimina</button>
+          </div>
+        `;
+        cardList.appendChild(cardDiv);
+      });
+    }
+
+    function applyFilters() {
+      const startVal = document.getElementById('filterStart').value;
+      const endVal = document.getElementById('filterEnd').value;
+
+      let filtered = allStoricoRows.filter(r => {
+        if (!r.data) return false;
+        const parts = r.data.split('/');
+        if (parts.length !== 3) return true;
+        const rowDateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        if (startVal && rowDateStr < startVal) return false;
+        if (endVal && rowDateStr > endVal) return false;
+        return true;
+      });
+
+      renderTable(filtered);
+      scrollToBottomTable();
+    }
+
+    function resetFilters() {
+      document.getElementById('filterStart').value = '';
+      document.getElementById('filterEnd').value = '';
+      renderTable(allStoricoRows);
+      scrollToBottomTable();
+    }
+
+    async function saveSpesaRecord() {
+      const editIndex = document.getElementById('editRowIndex').value;
+      const record = {
+        rowIndex: editIndex ? parseInt(editIndex, 10) : null,
+        data: document.getElementById('newDate').value,
+        descrizione: document.getElementById('newDesc').value,
+        dare: document.getElementById('newDare').value,
+        avere: document.getElementById('newAvere').value,
+        note: document.getElementById('newNote').value
+      };
+
+      if (!record.data || !record.descrizione) {
+        alert("Inserisci almeno la data e la descrizione.");
+        return;
+      }
+
+      const btn = document.getElementById('btnAddSpesa');
+      btn.disabled = true;
+      btn.innerText = 'Salvataggio...';
+
+      try {
+        const action = editIndex ? 'updateStorico' : 'addStorico';
+        await apiCall(action, 'POST', { record });
+        closeFormAndReset();
+        await loadStoricoData();
+      } catch (err) {
+        alert("Errore durante il salvataggio: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Salva';
+      }
+    }
+
+    async function downloadExcel() {
+      try {
+        const res = await apiCall('getExcelUrl');
+        if (res.url) window.open(res.url, '_blank');
+        else alert("Impossibile generare il link per il download.");
+      } catch (err) {
+        alert("Errore nel download: " + err.message);
+      }
+    }
+
+    function editStoricoRow(rowIndex, dateStr, descrizione, dare, avere, note) {
+      let isoDate = '';
+      if (dateStr && dateStr.includes('/')) {
+        const p = dateStr.split('/');
+        if (p.length === 3) isoDate = `${p[2]}-${p[1]}-${p[0]}`;
+      }
+
+      document.getElementById('editRowIndex').value = rowIndex;
+      document.getElementById('newDate').value = isoDate;
+      document.getElementById('newDesc').value = descrizione;
+      document.getElementById('newDare').value = dare;
+      document.getElementById('newAvere').value = avere;
+      document.getElementById('newNote').value = note;
+
+      document.getElementById('formTitle').innerText = `✏️ Modifica Movimento (Riga ${rowIndex})`;
+      document.getElementById('btnAddSpesa').innerText = 'Aggiorna';
+      document.getElementById('btnCancelEdit').style.display = 'inline-flex';
+      
+      document.getElementById('formCollapsibleContainer').classList.add('open');
+      document.getElementById('toggleFormBtn').innerText = '❌ Chiudi Modulo';
+      document.getElementById('toggleFormBtn').style.background = '#dc2626';
+      document.querySelector('.modal-card.wide').scrollTop = 0;
+    }
+
+    function resetFormFields() {
+      document.getElementById('editRowIndex').value = '';
+      document.getElementById('newDate').value = '';
+      document.getElementById('newDesc').value = '';
+      document.getElementById('newDare').value = '';
+      document.getElementById('newAvere').value = '';
+      document.getElementById('newNote').value = '';
+      document.getElementById('formTitle').innerText = '➕ Aggiungi Nuovo Movimento';
+      document.getElementById('btnAddSpesa').innerText = 'Salva';
+      document.getElementById('btnCancelEdit').style.display = 'none';
+    }
+
+    function closeFormAndReset() {
+      resetFormFields();
+      document.getElementById('formCollapsibleContainer').classList.remove('open');
+      const toggleBtn = document.getElementById('toggleFormBtn');
+      if (toggleBtn) {
+        toggleBtn.innerText = '➕ Nuovo Movimento';
+        toggleBtn.style.background = 'var(--primary)';
+      }
+    }
+
+    function promptDeleteStoricoRow(rowIndex) {
+      document.getElementById('storicoRowToDelete').value = rowIndex;
+      document.getElementById('deleteStoricoModal').style.display = 'flex';
+    }
+
+    function closeDeleteStoricoModal() {
+      document.getElementById('storicoRowToDelete').value = '';
+      document.getElementById('deleteStoricoModal').style.display = 'none';
+    }
+
+    async function executeDeleteStoricoRow() {
+      const rowIndex = document.getElementById('storicoRowToDelete').value;
+      if (!rowIndex) return;
+
+      closeDeleteStoricoModal();
+      try {
+        await apiCall('deleteStorico', 'POST', { rowIndex: parseInt(rowIndex, 10) });
+        await loadStoricoData();
+      } catch (err) {
+        alert("Errore durante l'eliminazione: " + err.message);
+      }
+    }
+
+    function closeStoricoModal() {
+      closeFormAndReset();
+      document.getElementById('storicoModal').style.display = 'none';
+    }
+
+    function openStatsModal() { document.getElementById('statsModal').style.display = 'flex'; }
+    function closeStatsModal() { document.getElementById('statsModal').style.display = 'none'; }
+    function closeDeleteModal() { eventToDeleteId = null; document.getElementById('deleteModal').style.display = 'none'; }
+
+    async function confirmDeleteEvent() {
+      if (!eventToDeleteId) return;
+      try {
+        await apiCall('deleteBooking', 'POST', { eventId: eventToDeleteId });
+        closeDeleteModal();
+        loadedRanges.length = 0;
+        calendar.refetchEvents();
+      } catch (err) {
+        alert("Errore durante l'eliminazione: " + err.message);
+      }
+    }
+
+    function updateCategory() {
+      const select = document.getElementById('userSelect');
+      currentCategory = select.options[select.selectedIndex].getAttribute('data-category');
+      checkTurn();
+    }
+
+    async function checkTurn() {
+      const banner = document.getElementById('turnBanner');
+      if (currentCategory === 'Entrambe') {
+        banner.className = 'turn-info turn-summer';
+        banner.innerHTML = `Categoria: <strong>Entrambe le Famiglie</strong> (Condivisione)`;
+        return;
+      }
+      if (currentCategory === 'Ospiti') {
+        banner.className = 'turn-info turn-summer';
+        banner.innerHTML = `Categoria: <strong>Ospiti / Affitto</strong> (Nessun vincolo)`;
+        return;
+      }
+      if (!selectedStartDate) return;
+
+      try {
+        const res = await apiCall('getTurn', 'GET', { date: selectedStartDate });
+        if (res.turn.includes('Nessun turno')) {
+          banner.className = 'turn-info turn-summer';
+          banner.innerHTML = `Periodo estivo: <strong>Nessun turno vincolato</strong>`;
+        } else {
+          banner.className = 'turn-info ' + (res.turn === 'Gigi' ? 'turn-gigi' : 'turn-alessandro');
+          let msg = `Turno invernale: <strong>Famiglia ${res.turn}</strong>`;
+          if (currentCategory && currentCategory !== res.turn) {
+            msg += ` <small style="opacity: 0.8; display:block; margin-top:2px;">(Scambio flessibile consentito)</small>`;
+          }
+          banner.innerHTML = msg;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      if (!selectedStartDate || !selectedEndDate) {
+        alert("Seleziona un periodo valido (inizio e fine) dal calendario.");
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = 'Salvataggio...';
+
+      const bookingData = {
+        name: document.getElementById('userSelect').value,
+        category: currentCategory,
+        startDate: selectedStartDate,
+        endDate: selectedEndDate,
+        note: document.getElementById('bookingNote').value
+      };
+
+      try {
+        await apiCall('createBooking', 'POST', bookingData);
+        btn.disabled = false;
+        btn.innerText = 'Conferma Prenotazione';
+        document.getElementById('bookingForm').reset();
+        const fp = document.querySelector("#dateRange")._flatpickr;
+        if (fp) fp.clear();
+        selectedStartDate = '';
+        selectedEndDate = '';
+        currentCategory = '';
+        loadedRanges.length = 0;
+        calendar.refetchEvents();
+      } catch (err) {
+        alert("Errore durante il salvataggio: " + err.message);
+        btn.disabled = false;
+        btn.innerText = 'Conferma Prenotazione';
+      }
+    }
+
+    async function calculateStats() {
+      const start = document.getElementById('statStart').value;
+      const end = document.getElementById('statEnd').value;
+
+      if (!start || !end) {
+        alert('Seleziona sia la data di inizio che quella di fine.');
+        return;
+      }
+
+      try {
+        const res = await apiCall('getStats', 'GET', { start, end });
+        if (res.error) {
+          alert(res.error);
+          return;
+        }
+
+        document.getElementById('statsResults').style.display = 'block';
+        document.getElementById('statTotal').innerText = res.totalDays;
+        document.getElementById('statOccupied').innerText = res.occupiedDays;
+        document.getElementById('statEmpty').innerText = res.emptyDays;
+
+        let detailHtml = '<strong>Presenze per Categoria:</strong><br>';
+        detailHtml += `• Famiglia Gigi: ${res.familyDays.Gigi} giorni<br>`;
+        detailHtml += `• Famiglia Alessandro: ${res.familyDays.Alessandro} giorni<br>`;
+        detailHtml += `• Entrambe le Famiglie: ${res.familyDays.Entrambe} giorni<br>`;
+        detailHtml += `• Ospiti / Affitto: ${res.familyDays.Ospiti} giorni<br><br>`;
+        detailHtml += '<strong>Dettaglio Prenotazioni:</strong><br>';
+        for (let name in res.personDays) {
+          detailHtml += `• ${name}: ${res.personDays[name]} giorni<br>`;
+        }
+        document.getElementById('statsDetail').innerHTML = detailHtml;
+      } catch (err) {
+        alert("Errore nel calcolo delle statistiche: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
